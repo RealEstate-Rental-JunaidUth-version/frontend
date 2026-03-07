@@ -48,7 +48,6 @@ pipeline {
         }
 
         stage('Docker Build & Push') {
-            // This mirrors your Maven workflow: only push on main
             when { branch 'main' }
             steps {
                 script {
