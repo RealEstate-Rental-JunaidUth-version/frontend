@@ -53,8 +53,8 @@ pipeline {
             when { branch 'main' }
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: 'DOCKER_HUB', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER_CRED')]) {
-                        sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER_CRED" --password-stdin'
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                        sh 'echo "$PASS" | docker login -u "$USER" --password-stdin'
                         
                         APPS.split(' ').each { appName ->
                             if (fileExists("dist/apps/${appName}")) {
