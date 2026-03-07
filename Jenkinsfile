@@ -1,3 +1,5 @@
+    // this pipeline do not belong to the shared library pipelines, because there is one repo for the frontend
+
 pipeline {
     agent any
 
