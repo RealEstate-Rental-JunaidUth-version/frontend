@@ -6,7 +6,7 @@ pipeline {
     environment {
         DOCKER_USER = 'junaiduthman'
         APPS = "public-app admin-app"
-        IMAGE_TAG = "${GIT_COMMIT.take(7)}"
+        IMAGE_TAG = "${env.BUILD_NUMBER}-${GIT_COMMIT.take(7)}"
         NODE_OPTIONS = "--max-old-space-size=4096"
     }
 
