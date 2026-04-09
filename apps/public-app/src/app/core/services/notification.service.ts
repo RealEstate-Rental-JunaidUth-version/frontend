@@ -29,9 +29,18 @@ export class NotificationService {
     // Construct Broker URL for native WebSocket
     // We bypass SockJS and use the direct /websocket sub-path
     const gatewayUrl = API_CONSTANTS.GATEWAY_URL;
-    const wsProtocol = gatewayUrl.startsWith('https') ? 'wss' : 'ws';
-    const cleanUrl = gatewayUrl.replace(/^https?:\/\//, '');
-    const brokerURL = `${wsProtocol}://${cleanUrl}${API_CONSTANTS.ENDPOINTS.NOTIFICATIONS.SOCKET}/websocket`;
+
+    let brokerURL = "";
+    if (gatewayUrl) {
+      const wsProtocol = gatewayUrl.startsWith('https') ? 'wss' : 'ws';
+      const cleanUrl = gatewayUrl.replace(/^https?:\/\//, '');
+      brokerURL = `${wsProtocol}://${cleanUrl}${API_CONSTANTS.ENDPOINTS.NOTIFICATIONS.SOCKET}/websocket`;
+    } else {
+      // If gatewayUrl is relative or empty, use the current window location
+      // This ensures we match the protocol (ws vs wss) and host of the page
+      const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+      brokerURL = `${wsProtocol}://${window.location.host}${API_CONSTANTS.ENDPOINTS.NOTIFICATIONS.SOCKET}/websocket`;
+    }
 
     this.stompClient = new Client({
       brokerURL: brokerURL,
