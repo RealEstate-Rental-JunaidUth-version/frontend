@@ -73,7 +73,7 @@ pipeline {
                 when { branch 'main' }
                 steps {
                     script {
-                        def gitOpsRepo = "github.com/RealEstate-Rental-JunaidUth-version/K8s-Chart"
+                        def gitOpsRepo = "github.com/RealEstate-Rental-JunaidUth-version/K8s-Chart.git"
                         def credentialsId = 'reel-estate-github-app'
                         def newTag = "${env.BUILD_NUMBER}-${env.GIT_COMMIT.take(7)}"
 
