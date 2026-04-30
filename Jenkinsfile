@@ -79,7 +79,7 @@ pipeline {
 
                         withCredentials([usernamePassword(credentialsId: credentialsId, passwordVariable: 'GIT_PASS', usernameVariable: 'GIT_USER')]) {
                             
-sh 'git clone https://$GIT_USER:$GIT_PASS@' + gitOpsRepo + ' gitops-temp'
+                            sh 'git clone https://x-access-token:$GIT_PASS@' + gitOpsRepo + ' gitops-temp'
                             dir('gitops-temp') {
                                 // TARGETED UPDATE: 
                                 // This tells yq to find the app name under 'microservices' and update its 'tag'
