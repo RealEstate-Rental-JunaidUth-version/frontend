@@ -73,11 +73,14 @@ pipeline {
                 when { branch 'main' }
                 steps {
                     script {
-                        def gitOpsRepo = "github.com/RealEstate-Rental-JunaidUth-version/K8s-Chart.git"
+                        def gitOpsRepo = "github.com/RealEstate-Rental-JunaidUth-version/K8s-Chart"
                         def credentialsId = 'reel-estate-github-app'
                         def newTag = "${env.BUILD_NUMBER}-${env.GIT_COMMIT.take(7)}"
 
                         withCredentials([usernamePassword(credentialsId: credentialsId, passwordVariable: 'GIT_PASS', usernameVariable: 'GIT_USER')]) {
+                            
+                            // This will print the HTTP status code. 200 = Success, 404 = App can't see the repo.
+        sh 'curl -o /dev/null -s -w "%{http_code}\\n" -H "Authorization: token $GIT_PASS" https://api.github.com/repos/RealEstate-Rental-JunaidUth-version/K8s-Chart'
                             
                             sh 'git clone https://x-access-token:$GIT_PASS@' + gitOpsRepo + ' gitops-temp'
                             dir('gitops-temp') {
