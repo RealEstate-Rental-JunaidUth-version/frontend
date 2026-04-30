@@ -70,37 +70,49 @@ pipeline {
         }
 
         stage('Update GitOps Manifest') {
-                when { branch 'main' }
-                steps {
-                    script {
-                        def gitOpsRepo = "github.com/RealEstate-Rental-JunaidUth-version/K8s-Chart"
-                        def credentialsId = 'reel-estate-github-app'
-                        def newTag = "${env.BUILD_NUMBER}-${env.GIT_COMMIT.take(7)}"
+            when { branch 'main' }
+            steps {
+                script {
+                    // Added .git to the URL
+                    def gitOpsRepo = "github.com/RealEstate-Rental-JunaidUth-version/K8s-Chart.git"
+                    def credentialsId = 'reel-estate-github-app'
 
-                        withCredentials([usernamePassword(credentialsId: credentialsId, passwordVariable: 'GIT_PASS', usernameVariable: 'GIT_USER')]) {
+                    withCredentials([usernamePassword(credentialsId: credentialsId, passwordVariable: 'GIT_PASS', usernameVariable: 'GIT_USER')]) {
+                        
+                        // Debug curl
+                        sh 'curl -o /dev/null -s -w "%{http_code}\\n" -H "Authorization: token $GIT_PASS" https://api.github.com/repos/RealEstate-Rental-JunaidUth-version/K8s-Chart'
+                        
+                        sh 'git clone https://x-access-token:$GIT_PASS@' + gitOpsRepo + ' gitops-temp'
+                        
+                        dir('gitops-temp') {
                             
-                            // This will print the HTTP status code. 200 = Success, 404 = App can't see the repo.
-        sh 'curl -o /dev/null -s -w "%{http_code}\\n" -H "Authorization: token $GIT_PASS" https://api.github.com/repos/RealEstate-Rental-JunaidUth-version/K8s-Chart'
-                            
-                            sh 'git clone https://x-access-token:$GIT_PASS@' + gitOpsRepo + ' gitops-temp'
-                            dir('gitops-temp') {
-                                // TARGETED UPDATE: 
-                                // This tells yq to find the app name under 'microservices' and update its 'tag'
-                                sh "yq -i '.microservices.\"${config.appName}\".tag = \"${newTag}\"' ./values.yaml"
-
-                                sh """
-                                    git config user.email "jenkins@yourdomain.com"
-                                    git config user.name "Jenkins CI"
-                                    git add values.yaml
-                                    git commit -m "chore(deps): update ${config.appName} tag to ${newTag} [skip ci]"
-                                    git push https://${GIT_USER}:${GIT_PASS}@${gitOpsRepo} HEAD:main
-                                """
+                            // Loop through the Nx apps just like the Docker stage
+                            APPS.split(' ').each { appName ->
+                                
+                                // Use env.WORKSPACE because we are inside the gitops-temp directory
+                                if (fileExists("${env.WORKSPACE}/dist/apps/${appName}")) {
+                                    echo "Updating GitOps manifest for ${appName}..."
+                                    
+                                    sh "yq -i '.microservices.\"${appName}\".tag = \"${env.IMAGE_TAG}\"' ./values.yaml"
+                                    
+                                    sh """
+                                        git config user.email "jenkins@yourdomain.com"
+                                        git config user.name "Jenkins CI"
+                                        git add values.yaml
+                                        # The || true prevents the pipeline from crashing if the commit has no changes
+                                        git commit -m "chore(deps): update ${appName} tag to ${env.IMAGE_TAG} [skip ci]" || true
+                                    """
+                                }
                             }
-                            sh "rm -rf gitops-temp"
+                            
+                            // Push the commits using the GitHub App token syntax
+                            sh 'git push https://x-access-token:$GIT_PASS@' + gitOpsRepo + ' HEAD:main'
                         }
+                        sh "rm -rf gitops-temp"
                     }
                 }
             }
+        }
     }
 
     post {
